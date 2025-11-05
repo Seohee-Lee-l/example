@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            width: 100%;
+            height: 50px;
+            border-bottom: 1px solid #e6e3e3;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 500;
+            line-height: 50px;
+            cursor: default;
+            transition: all .3s;
+        }
+
+        .header h1:hover {
+            color: #0080a7;
+        }
+
+        .input-box {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .input-box input.todo-input {
+            width: 80%;
+            border: 1px solid transparent;
+            border-bottom: 1px solid #ddd;
+            height: 30px;
+            padding: 0.2rem;
+            outline: none;
+            font-size: 0.9rem;
+            color: #000;
+        }
+
+        .input-box input.todo-input::placeholder {
+            color: #bbb;
+            font-size: 0.7rem;
+        }
+
+        .input-box button {
+            width: 20%;
+            border: 1px solid transparent;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            height: 30px;
+            border-left: 1px solid #ddd;
+            cursor: pointer;
+            transition: all .3s;
+            font-size: 0.8rem;
+        }
+
+        .input-box button:hover {
+            background: #f0f0f0;
+        }
+
+        .input-box2 {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            height: 30px;
+            width: 100%;
+        }
+
+        .input-box2 button {
+            width: 33.5%;
+            border: 1px solid transparent;
+            border-left: 1px solid #ddd;
+            background: transparent;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all .3s;
+        }
+
+        .input-box2 button:hover {
+            background: #f0f0f0;
+        }
+
+        p.todo {
+            width: 60%;
+            display: block;
+            width: 100%;
+            font-size: 1rem;
+            line-height: 30px;
+        }
+
+        p.todo b {
+            color: #0080a7;
+        }
+
+        p.ms {
+            display: block;
+            width: 100%;
+            font-size: 0.9rem;
+            color: #bbb;
+            margin-top: 1%;
+        }
+
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 40px;
+        }
+
+        .todo-item .todo-text {
+            display: flex;
+            align-items: center;
+        }        .todo-item span {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .todo-item button {
+            width: 20%;
+            height: 100%;
+            border: 1px solid transparent;
+            border-left: 1px solid #ddd;
+            background: transparent;
+            cursor: pointer;
+            transition: all .3s;
+        }
+
+        .todo-item button:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const {useState, useEffect}=React;
+        function App() {
+            // localStorage에서 데이터 불러오기
+            // JSON.parse: 문자열(String) 형태로 된 JSON 데이터를 자바스크립트 객체(Object)로 변환하는 함수
+            const load=()=> {
+                try {
+                    const saved=JSON.parse(localStorage.getItem('state'));
+                    if (saved && saved.keyCount!==undefined) return saved;
+                } catch(e) {}
+                return {keyCount: 0, currentValue: '', todos: []};
+            }
+            
+            const [state, setState]=useState(load);
+            const [hideDone, setHideDone]=useState(false);  // 완료 항목 숨기기 여부
+            
+            // JSON.stringify: 자바스크립트 객체(Object)나 배열(Array)을 JSON 문자열(String) 형태로 변환하는 함수
+            // 상태 변경 시 localStorage에 저장
+            useEffect(()=> {
+                localStorage.setItem('state', JSON.stringify(state));
+            }, [state]);
+
+            // 입력값 변경
+            const textChange=(e)=> {
+                setState({...state, currentValue: e.target.value});
+            }
+
+            // 엔터 키 입력
+            const textKeyDown=(e)=> {
+                if (e.keyCode===13) buttonClick();
+            }
+
+            // 할 일 추가
+            const buttonClick=()=> {
+                if (state.currentValue.trim()!='') {
+                    setState({
+                        ...state,
+                        todos: [
+                            ...state.todos,
+                            {
+                                key: state.keyCount.toString(),
+                                isDone: false,
+                                text: state.currentValue
+                            },
+                        ],
+                        keyCount: state.keyCount+1,
+                        currentValue: ''
+                    });
+                }
+            }
+
+            // 할 일 제거
+            const removeItem=(key)=> {
+                setState({
+                    ...state,
+                    todos: state.todos.filter((todo)=> todo.key!==key)
+                });
+            }
+
+            // 체크 상태 변경
+            const changeCheckData=(key, changed)=> {
+                const updated=state.todos.map((todo)=> 
+                    todo.key===key ? {...todo, isDone: changed} : todo
+                );
+
+                setState({
+                    ...state,
+                    todos: updated
+                });
+            }
+
+            // 전체 삭제
+            const clearAll=()=> {
+                setState({
+                    keyCount: 0,
+                    currentValue: '',
+                    todos: []
+                });
+            }
+
+            // 완료된 항목 숨기기 토글
+            const toggleHideDone=()=> setHideDone (!hideDone);
+
+            // 남은 할 일 개수 계산
+            const remainingCount=state.todos.filter((t)=> !t.isDone).length;
+
+            // 표시할 목록 필터링
+            const visibleTodos=hideDone
+            ? state.todos.filter((t)=> !t.isDone)
+            : state.todos;
+
+
+            return (
+                <div style={{fontFamily: 'sans-serif'}}>
+                    <div className='header'>
+                        <h1>To-do list</h1>
+                    </div>
+                    
+                    <div className='input-box'>
+                        <input className='todo-input'
+                            value={state.currentValue}
+                            onChange={textChange}
+                            onKeyDown={textKeyDown}
+                            placeholder='할 일을 입력하세요'
+                        />
+                        <button onClick={buttonClick}>추가하기</button>
+                    </div>
+
+                    <div className='input-box2'>
+                        <p className='todo'>남은 할 일 : <b>{remainingCount}</b>개</p>
+
+                        <button onClick={toggleHideDone}>
+                            {hideDone ? "완료 항목 보이기" : "완료 항목 숨기기"}
+                        </button>
+
+                        <button onClick={clearAll}>전체 삭제</button>
+                    </div>
+
+                    <div>
+                        {visibleTodos.length===0 ? (
+                            <p className='ms'>할 일이 없습니다.</p>
+                        ) : (
+                                visibleTodos.map((todo)=> (
+                                    <TodoItem style={{borderBottom: '1px solid #ddd'}}
+                                        key={todo.key}
+                                        dataKey={todo.key}
+                                        isDone={todo.isDone}
+                                        text={todo.text}
+                                        removeItem={removeItem}
+                                        changeCheckData={changeCheckData}
+                                    />
+                                ))
+                            )}
+                    </div>
+                </div>
+            );
+        } // App 종료
+        
+        
+        // To do 항목 컴포넌트
+        function TodoItem({dataKey, isDone, text, removeItem, changeCheckData, style}) {
+            const [checked, setChecked]=useState(isDone);
+
+            useEffect(()=> {
+                setChecked(isDone);
+            }, [isDone]);
+
+            const checkboxClick=()=> {
+                const newValue=!checked;
+                setChecked(newValue);
+                changeCheckData(dataKey, newValue);
+            }            
+              const textStyle={
+                ...style,
+                textDecoration: checked ? "line-through" : "",
+                color: checked ? "#0080a7" : "black"
+            }
+
+            return (
+                <div style={style} className='todo-item'>
+                    <div className='todo-text'>
+                        <input type="checkbox" checked={checked} onChange={checkboxClick}/>
+                        <span style={{
+                            marginLeft: '5px',
+                            textDecoration: checked ? "line-through" : "",
+                            color: checked ? "#0080a7" : "black"
+                        }}>{text}</span>
+                    </div>
+
+                    <button onClick={()=> removeItem(dataKey)} style={{marginLeft: '10px', color: '#0080a7'}}>제거</button>
+                </div>
+            );
+        } // Todo 항목 컴포넌트 종료
+
+        ReactDOM.render(
+            <App/>,
+            document.getElementById('root')
+        );
+    </script>
+</body>
+</html>
